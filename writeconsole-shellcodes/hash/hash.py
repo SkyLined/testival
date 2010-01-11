@@ -134,7 +134,7 @@ def AddExports(exports, module_name, module_version, file_path):
       elif re.match(r'^\s*Summary\s*[\r\n]*$', line):
         break;                            # start of footer
       else:
-        export_match = re.match(r'^.{11} .{4} \w{8} (\w+)\s*[\r\n]*$', line);
+        export_match = re.match(r'^.{11} .{4} \w{8} (\w+)(?: = .*)?\s*[\r\n]*$', line);
         if export_match:
           export = export_match.group(1);
           module_exports.append(export);
@@ -363,6 +363,9 @@ def Main():
     else:
       print;
       print 'Failed! Cannot find a suitable hashing algorithm';
+      return False;
+  return True;
 
 if __name__ == '__main__':
-  Main();
+  if not Main():
+    exit(-1);
