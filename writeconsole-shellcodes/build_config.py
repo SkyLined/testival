@@ -2,36 +2,36 @@ build_config = {
   "version": "0.1",
   "projects": {
     # Windows x86
-    "w32-writeconsole-shellcode-hash-list.mac": {                               # List of hashes
+    "w32-writeconsole-shellcode-hash-list.asm": {                               # List of hashes
       "files": {
-        "w32-writeconsole-shellcode-hash-list.mac": {
+        "w32-writeconsole-shellcode-hash-list.asm": {
           "sources": ["w32-writeconsole-shellcode-hash-list.txt"],
           "build commands": [
               ["hash\\hash.cmd",
                 "--input=w32-writeconsole-shellcode-hash-list.txt",
-                "--output=w32-writeconsole-shellcode-hash-list.mac"],
+                "--output=w32-writeconsole-shellcode-hash-list.asm"],
           ],
         },
       },
     },
     "w32-writeconsole-shellcode.bin": {                                         # Shellcode
       "architecture": "x86",
-      "dependencies": ["w32-writeconsole-shellcode-hash-list.mac"],
+      "dependencies": ["w32-writeconsole-shellcode-hash-list.asm"],
       "files": {
         "w32-writeconsole-shellcode.bin": {
           "sources":  ["w32-writeconsole-shellcode.asm"],
-          "includes": ["w32-writeconsole-shellcode-hash-list.mac"],
+          "includes": ["w32-writeconsole-shellcode-hash-list.asm"],
         },
       },
       "test commands": ["test-w32-writeconsole-shellcode.bin.cmd"],
     },
     "w32-writeconsole-shellcode-esp.bin": {                                     # Stack aligned shellcode
       "architecture": "x86",
-      "dependencies": ["w32-writeconsole-shellcode-hash-list.mac"],
+      "dependencies": ["w32-writeconsole-shellcode-hash-list.asm"],
       "files": {
         "w32-writeconsole-shellcode-esp.bin": {
           "sources":  ["w32-writeconsole-shellcode.asm"],
-          "includes": ["w32-writeconsole-shellcode-hash-list.mac"],
+          "includes": ["w32-writeconsole-shellcode-hash-list.asm"],
           "defines":  {"STACK_ALIGN": "TRUE"},
         }
       },
@@ -46,7 +46,7 @@ build_config = {
         },
         "w32-writeconsole-shellcode.obj": {
           "sources":  ["w32-writeconsole-shellcode.asm"],
-          "includes": ["w64-writeconsole-shellcode-hash-list.mac"],
+          "includes": ["w64-writeconsole-shellcode-hash-list.asm"],
         },
         "w32-dll-run-shellcode.obj": {
           "sources": ["win-dll-run-shellcode.c"],
@@ -55,25 +55,25 @@ build_config = {
       "test commands": ["test-w32-writeconsole-shellcode.dll.cmd"]
     },
     # Windows x64
-    "w64-writeconsole-shellcode-hash-list.mac": {                               # List of hashes
+    "w64-writeconsole-shellcode-hash-list.asm": {                               # List of hashes
       "files": {
-        "w64-writeconsole-shellcode-hash-list.mac": {
+        "w64-writeconsole-shellcode-hash-list.asm": {
           "sources": ["w64-writeconsole-shellcode-hash-list.txt"],
           "build commands": [
               ["hash\\hash.cmd",
                 "--input=w64-writeconsole-shellcode-hash-list.txt",
-                "--output=w64-writeconsole-shellcode-hash-list.mac"],
+                "--output=w64-writeconsole-shellcode-hash-list.asm"],
           ],
         },
       },
     },
     "w64-writeconsole-shellcode.bin": {                                         # Shellcode
       "architecture": "x64",
-      "dependencies": ["w64-writeconsole-shellcode-hash-list.mac"],
+      "dependencies": ["w64-writeconsole-shellcode-hash-list.asm"],
       "files": {
         "w64-writeconsole-shellcode.bin": {
           "sources":  ["w64-writeconsole-shellcode.asm"],
-          "includes": ["w64-writeconsole-shellcode-hash-list.mac"],
+          "includes": ["w64-writeconsole-shellcode-hash-list.asm"],
         }
       },
       "test commands": ["test-w64-writeconsole-shellcode.bin.cmd"],
@@ -87,7 +87,7 @@ build_config = {
         },
         "w64-writeconsole-shellcode.obj": {
           "sources":  ["w64-writeconsole-shellcode.asm"],
-          "includes": ["w64-writeconsole-shellcode-hash-list.mac"],
+          "includes": ["w64-writeconsole-shellcode-hash-list.asm"],
         },
         "w64-dll-run-shellcode.obj": {
           "sources":  ["win-dll-run-shellcode.c"],
