@@ -1,3 +1,6 @@
+; Copyright (c) 2006-2010, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; Project homepage: http://code.google.com/p/testival/
+; All rights reserved. See COPYRIGHT.txt for details.
 BITS 32
 SECTION .text
 

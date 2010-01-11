@@ -1,3 +1,6 @@
+# Copyright (c) 2009-2010, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+# Project homepage: http://code.google.com/p/testival/
+# All rights reserved. See COPYRIGHT.txt for details.
 import os, re, sys
 
 LOCAL_PATH = os.path.dirname(sys.argv[0])
