@@ -297,10 +297,14 @@ void help(void) {
   printf("                     catch first change exceptions and report exception\r\n");
   printf("                     information about them as well.\r\n");
   printf("  (Debug breakpoints are ignored by both --EH settings; no information is\r\n");
-  printf("  reported and the application is not terminated).");
+  printf("  reported and the application is not terminated).\r\n");
   printf("Stand-alone options:\r\n");
   printf("    --help           Output this information.\r\n");
   printf("    --version        Output version and build information.\r\n");
+  printf("\r\n");
+  printf("Example usage\r\n");
+  printf("  w32-testival.exe eip=$ [$]=ascii:w32-writeconsole-shellcode.bin\r\n");
+  printf("  w32-testival.exe --loadlibrary w32-writeconsole-shellcode.dll\r\n");
 }
 // Output some information about the version and build of this application
 void version(void) {
