@@ -1,5 +1,9 @@
+; Copyright (c) 2006-2010, Berend-Jan "SkyLined" Wever <berendjanwever@gmail.com>
+; Project homepage: http://code.google.com/p/testival/
+; All rights reserved. See COPYRIGHT.txt for details.
 BITS 64
 SECTION .text
+
 ; Windows x64 null-free shellcode that writes "Hello, world!" to stdout.
 ; Works in any console application for Windows 5.1-7.0 all service packs.
 ; (See http://skypher.com/wiki/index.php/Hacking/Shellcode).
