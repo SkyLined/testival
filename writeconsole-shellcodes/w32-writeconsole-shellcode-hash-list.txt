@@ -1,0 +1,13 @@
+; Hash v1.0 config file
+[modules]
+ntdll
+kernel32
+[functions]
+kernel32!GetStdHandle
+kernel32!WriteFile
+kernel32!FlushFileBuffers
+kernel32!ExitProcess
+[hash function]
+XORROR16B
+[collision level]
+all
