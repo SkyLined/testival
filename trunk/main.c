@@ -304,7 +304,7 @@ void help(void) {
   printf("    --help           Output this information.\r\n");
   printf("    --version        Output version and build information.\r\n");
   printf("\r\n");
-  printf("Example usage\r\n");
+  printf("Example usage:\r\n");
   printf("  " QUOTE(BUILD_PROJECT) " eip=$ [$]=ascii:w%d-writeconsole-shellcode.bin\r\n", VALUE_BITS);
   printf("  " QUOTE(BUILD_PROJECT) " --loadlibrary w%d-writeconsole-shellcode.dll\r\n", VALUE_BITS);
 }
