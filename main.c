@@ -94,7 +94,7 @@ char* add_value_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addr
   // Allocate one block of memory to hold the data chunk and the value:
   char *pchunk_and_data = malloc(sizeof(struct data_chunk) + sizeof(VALUE));
   if (pchunk_and_data == 0) {
-    perror("Memory cannot be allocated for data chunk.");
+    fprintf(stderr, "Memory cannot be allocated for data chunk.\r\n");
     exit(1);
   }
   // The data chunk will be stored at the start of the allocated memory:
@@ -135,7 +135,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
     // Find out where stdin is:
     file = GetStdHandle(STD_INPUT_HANDLE);
     if (file == INVALID_HANDLE_VALUE) {
-      perror("Stdin cannot be opened.");
+      fprintf(stderr, "Stdin cannot be opened.\r\n");
       exit(1);
     }
     do {
@@ -148,14 +148,14 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
         // Yes: allocate one block of memory to hold the data chunk and the buffer:
         pchunk_and_data = malloc(sizeof(struct data_chunk) + data_size);
         if (pchunk_and_data == 0) {
-          perror("Memory cannot be allocated for stdin data chunk.");
+          fprintf(stderr, "Memory cannot be allocated for stdin data chunk.\r\n");
           exit(1);
         }
       } else {
         // No: reallocate one larger block of memory to hold the data chunk and the buffer:
         pchunk_and_data = realloc(pchunk_and_data, data_size);
         if (pchunk_and_data == 0) {
-          perror("Additional memory cannot be allocated for stdin data chunk.");
+          fprintf(stderr, "Additional memory cannot be allocated for stdin data chunk.\r\n");
           exit(1);
         }
       }
@@ -165,7 +165,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
       pdata = (char*) (pchunk_and_data + sizeof(struct data_chunk));
       // Read a chunk of data from stdin:
       if (ReadFile(file, pdata + file_size, STDIN_CHUNK_SIZE, &bytes_read, NULL) == FALSE) {
-        perror("File cannot be read!");
+        fprintf(stderr, "File cannot be read!\r\n");
         exit(1);
       }
       // Count the number of bytes read:
@@ -186,7 +186,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
     // Get the size of the file:
     file_size = GetFileSize(file, NULL);
     if (file_size == INVALID_FILE_SIZE) {
-      perror("Size of file cannot be retreived.");
+      fprintf(stderr, "Size of file cannot be retreived.\r\n");
       exit(1);
     }
     // Allocate one block of memory to hold the data chunk and the data read from the file, taking into account
@@ -195,7 +195,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
     if (unicode) data_size *= 2;
     pchunk_and_data = malloc(sizeof(struct data_chunk) + data_size);
     if (pchunk_and_data == 0) {
-      perror("Memory cannot be allocate for file data chunk.");
+      fprintf(stderr, "Memory cannot be allocate for file data chunk.\r\n");
       exit(1);
     }
     // The data chunk will be stored at the start of the allocated memory:
@@ -204,7 +204,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
     pdata = (char*) (pchunk_and_data + sizeof(struct data_chunk));
     // Read the data from the file:
     if (ReadFile(file, pdata, file_size, &bytes_read, NULL) == FALSE) {
-      perror("File cannot be read!");
+      fprintf(stderr, "File cannot be read!\r\n");
       exit(1);
     }
     if (bytes_read < file_size) {
@@ -405,7 +405,7 @@ int main(int argc, char** argv) {
     } else if (strnicmp(argv[i], "--mem:protect=", 14) == 0) {
       protect = (int) strtol(argv[i] + 14, NULL, 16);
     } else if (strnicmp(argv[i], "--delay=", 8) == 0) {
-      delay = (int) strtol(argv[i] + 8, NULL, 16);
+      delay = (int) strtol(argv[i] + 8, NULL, 10);
     } else if (stricmp(argv[i], "--verbose") == 0) {
       switch_verbose++;
     } else if (stricmp(argv[i], "--int3") == 0) {
@@ -473,51 +473,72 @@ int main(int argc, char** argv) {
       }
     }
   }
+  if (switch_EH && switch_int3 && switch_verbose) {
+    printf("Warning: Having testival handle exceptions and trigger an int3 breakpoint\r\n");
+    printf("  before executing the shellcode does not make sense: the breakpoint will\r\n");
+    printf("  be handled by testival and the shellcode is unlikely to ever get executed.\r\n");
+  }
   // There are two things this program can do: test shellcode/ret-into-libc stacks or load a library:
   if (switch_loadlibrary == 0) {
-    // Check that RSP or return address is set and warn about problems with setting ESP.
-    if (!register_setting_sp.is_set) {
-      if (!register_setting_ip.is_set) {
-        printf("Either the \"%s\" or \"%s\" register must be set.\r\n"
-            "(Otherwise random memory would get executed, which isn't very useful).\r\n",
-            register_setting_sp.name, register_setting_ip.name);
-        exit(1);
-      } else if (switch_verbose) {
-        printf("Warning: changing \"%s\" may prevent JIT debuggers from attaching to the process\r\n"
-            "  in case of an exception.\r\n", register_setting_sp.name);
+    if (register_setting_sp.is_set) {
+      // Warn about problems with setting ESP:
+      if (switch_verbose) {
+        printf("Warning: changing \"%s\" may prevent JIT debuggers from attaching to the process\r\n");
+        printf("  in case of an exception because the JIT debugger uses the stack.\r\n", register_setting_sp.name);
         if (switch_EH) {
-          printf("  Also, the EH handler that reports information about exceptions is more\r\n"
-              "  likely to fail because of secondary exceptions.\r\n");
+          printf("Also, the exception handler registered by testival may not be able to handle\r\n");
+          printf("  the exception either because it uses the stack too.\r\n");
         }
       }
+    } else if (!register_setting_ip.is_set) {
+      // Check that ESP/RSP or EIP/RIP is set
+      fprintf(stderr, "Either the \"%s\" or \"%s\" register must be set.\r\n"
+          "(Otherwise random memory would get executed, which isn't very useful).\r\n",
+          register_setting_sp.name, register_setting_ip.name);
+      exit(1);
     }
     // Allocate memory
+    GetSystemInfo(&system_info);
     if (!memory_size_set) {
-      GetSystemInfo(&system_info);
       memory_size = (size_t)system_info.dwPageSize;
       memory_size_set = TRUE;
     }
     if (switch_verbose) {
-      printf("Memory allocation:\r\n");
-      PRINT_STATUS(("  Size"), ("= %X bytes.\r\n", memory_size));
+      printf("Allocating 0x%X bytes of memory", memory_size);
       if (allocation_type != DEFAULT_ALLOCATION_TYPE) {
-        PRINT_STATUS(("  Allocation type"), ("= %X.\r\n", allocation_type));
+        if (memory_base_address_set) {
+          printf(" (type: 0x%X, address: " FMT_VAL ")", allocation_type, memory_base_address);
+        } else {
+          printf(" (type: 0x%X)", allocation_type);
+        }
+      } else if (memory_base_address_set) {
+        printf(" (address: " FMT_VAL ")", memory_base_address);
       }
-      if (memory_base_address_set) {
-        PRINT_STATUS(("  Requested address"), ("= " FMT_VAL ".\r\n", memory_base_address));
-      }
+      printf("...");
     }
     memory_address = (VALUE)VirtualAlloc((LPVOID)memory_base_address, memory_size, allocation_type, DEFAULT_PROTECT);
     if (memory_address == 0) {
-      perror("Memory cannot be allocated!");
+      if (switch_verbose) printf(" failed!\r\n");
+      fprintf(stderr, "Memory cannot be allocated!\r\n");
       exit(1);
     }
-    if (!memory_base_address_set) memory_base_address = memory_address;
-    if (switch_verbose) {
-      PRINT_STATUS(("  Actual address"), ("= " FMT_VAL ".\r\n", memory_address));
-    // Apply data chunks
-      printf("Data, registers and return address:\r\n");
+    if (!memory_base_address_set) {
+      if (switch_verbose) printf(" ok. (address: " FMT_VAL ")\r\n", memory_address);
+      memory_base_address = memory_address;
+    } else if (memory_base_address != memory_address) {
+      if (switch_verbose) printf(" failed! (address: " FMT_VAL ")\r\n", memory_address);
+      if (memory_base_address & (system_info.dwAllocationGranularity - 1) > 0) {
+        fprintf(stderr, "(The operating system allocation granularity is 0x%X. The address at which\r\n", 
+            system_info.dwAllocationGranularity);
+        fprintf(stderr, "  you requested the memory to be allocated is not alligned to this value!)\r\n");
+      } else {
+        fprintf(stderr, "Memory was unexpectedly allocated at address " FMT_VAL ".\r\n", memory_address);
+      }
+      exit(1);
+    } else {
+      if (switch_verbose) printf(" ok.\r\n");
     }
+    if (switch_verbose) printf("Setting data and registers:\r\n");
     pdata_chunk = pfirst_data_chunk;
     while (pdata_chunk != NULL) {
       VALUE address = pdata_chunk->address;
@@ -588,14 +609,38 @@ int main(int argc, char** argv) {
     // Set up environment
     if (protect != DEFAULT_PROTECT) {
       DWORD saved_protect;
-      if (switch_verbose) printf("Adjusting memory protection:\r\n");
+      if (switch_verbose) printf("Setting memory protection to 0x%X...", protect);
       if (VirtualProtect((LPVOID)memory_address, 1, protect, &saved_protect) == 0) {
-        perror("Memory protection cannot be changed!");
+        if (switch_verbose) printf(" failed!\r\n");
+        fprintf(stderr, "Memory protection cannot be changed!\r\n");
+        exit(1);
+      } else {
+        if (switch_verbose) printf(" ok. (original value: 0x%X)\r\n", saved_protect);
+      }
+    }
+  }
+  if (switch_EH) {
+    if (switch_verbose) printf("Registering Structured Exception Handler (SEH)...");
+    SetUnhandledExceptionFilter(unhandled_exception_filter);
+    if (switch_verbose) printf("ok.\r\n");
+    if (switch_EH > 1) {
+      if (switch_verbose) printf("Registering Vectored Exception Handler (VEH)...");
+      VEH = AddVectoredExceptionHandler(1, vectored_exception_handler);
+      if (VEH == NULL) {
+        if (switch_verbose) printf(" failed!\r\n");
+        fprintf(stderr, "Cannot register vectored exception handler.\r\n");
         exit(1);
       }
-      if (switch_verbose) PRINT_STATUS(("  Memory protection"), ("= %X.\r\n", protect));
+      if (switch_verbose) printf("ok.\r\n");
     }
-    // Execute the shellcode
+  }
+  if (delay > 0) {
+    if (switch_verbose) printf("Waiting for %d milliseconds...", delay);
+    Sleep(delay);
+    if (switch_verbose) printf("ok.\r\n");
+  }
+  if (switch_loadlibrary == 0) {
+    // Modify registers to execute the shellcode
     if (switch_verbose) {
       char* int3_message = "";
       if (switch_int3) {
@@ -603,64 +648,47 @@ int main(int argc, char** argv) {
       }
       if (register_setting_ip.is_set) {
         if (switch_ret) {
-          printf("Executing shellcode%s by returning to " FMT_VAL ".\r\n", int3_message, register_value_ip);
+          printf("Executing shellcode%s by returning to " FMT_VAL "...", int3_message, register_value_ip);
         } else if (register_setting_ip.is_set) {
-          printf("Executing shellcode%s by jumping to " FMT_VAL ".\r\n", int3_message, register_value_ip);
+          printf("Executing shellcode%s by jumping to " FMT_VAL "...", int3_message, register_value_ip);
         }
-      } else if (register_setting_sp.is_set) {
-        printf("Executing ret-into-libc%s with stack at " FMT_VAL ".\r\n", int3_message, register_value_sp);
       } else {
-        printf("Cannot ret-into-libc without setting ESP.\r\n");
-        exit(1);
+        printf("Executing ret-into-libc%s with stack at " FMT_VAL "...", int3_message, register_value_sp);
       }
     }
-    if (switch_EH) {
-      SetUnhandledExceptionFilter(unhandled_exception_filter);
-      if (switch_EH > 1) {
-        VEH = AddVectoredExceptionHandler(1, vectored_exception_handler);
-        if (VEH == NULL) {
-          perror("Cannot register vectored exception handler.\r\n");
-          exit(1);
-        }
-      }
-    }
-    Sleep(delay);
     asm_SetRegisters(register_values, switch_int3 > 0, switch_ret > 0, register_setting_sp.is_set, register_setting_ip.is_set);
     if (switch_EH > 1 && RemoveVectoredExceptionHandler(VEH) == 0) {
-      perror("Cannot unregister vectored exception handler.\r\n");
+      fprintf(stderr, "Cannot unregister vectored exception handler.\r\n");
       exit(1);
     }
-  } else { // switch_loadlibrary > 0
-    if (switch_verbose) {
-      char* int3_message = "";
-      if (switch_int3) {
-        int3_message = " after triggering an int3";
-      }
-      printf("Loading module \"%s\"%s...\r\n", module_file_name, int3_message);
+  } else {
+    // Load the module t execute the shellcode
+    if (switch_int3) {
+      if (switch_verbose) printf("Triggering int 3...", delay);
+      __debugbreak();
+      if (switch_verbose) printf("ok.\r\n");
     }
-    if (switch_EH) {
-      SetUnhandledExceptionFilter(unhandled_exception_filter);
-      if (switch_EH > 1) {
-        VEH = AddVectoredExceptionHandler(1, vectored_exception_handler);
-        if (VEH == NULL) {
-          perror("Cannot register vectored exception handler.\r\n");
-          exit(1);
-        }
-      }
-    }
-    Sleep(delay);
-    if (switch_int3) __debugbreak();
+    if (switch_verbose) printf("Loading module \"%s\"... ", module_file_name);
     module = LoadLibrary(module_file_name);
-    if (switch_EH > 1 && RemoveVectoredExceptionHandler(VEH) == 0) {
-      perror("Cannot unregister vectored exception handler.\r\n");
-      exit(1);
+    if (module == NULL) {
+      if (switch_verbose) printf("failed!\r\n");
+    } else {
+      if (switch_verbose) printf("ok.\r\n");
+    }
+    if (switch_EH > 1) {
+      if (switch_verbose) printf("Removing Vectored Exception Handler (VEH)... ");
+      if (RemoveVectoredExceptionHandler(VEH) == 0) {
+        if (switch_verbose) printf("failed!\r\n");
+        fprintf(stderr, "Cannot unregister vectored exception handler.\r\n");
+        exit(1);
+      }
+      if (switch_verbose) printf("ok.\r\n");
     }
     if (module == NULL) {
       fprintf(stderr, "Failed to load module \"%s\".\r\n", module_file_name);
       exit(1);
-    } else {
-      if (switch_verbose) printf("Module \"%s\" successfully loaded.", module_file_name);
     }
   }
+  if (switch_verbose) printf("Testival terminated gracefully.\r\n");
   exit(0);
 }
