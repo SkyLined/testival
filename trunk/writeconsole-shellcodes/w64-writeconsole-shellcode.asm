@@ -12,7 +12,7 @@ SECTION .text
 %define message `Hello, world!\r\n`
 %strlen sizeof_message message
 
-%include "w64-writeconsole-shellcode-hash-list.mac"
+%include "w64-writeconsole-shellcode-hash-list.asm"
 
 %define B2W(b1,b2)                      (((b2) << 8) + (b1))
 %define W2DW(w1,w2)                     (((w2) << 16) + (w1))
