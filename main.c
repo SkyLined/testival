@@ -305,8 +305,8 @@ void help(void) {
   printf("    --version        Output version and build information.\r\n");
   printf("\r\n");
   printf("Example usage\r\n");
-  printf("  w%d-testival.exe eip=$ [$]=ascii:w32-writeconsole-shellcode.bin\r\n", VALUE_BITS);
-  printf("  w%d-testival.exe --loadlibrary w32-writeconsole-shellcode.dll\r\n", VALUE_BITS);
+  printf("  " QUOTE(BUILD_PROJECT) " eip=$ [$]=ascii:w%d-writeconsole-shellcode.bin\r\n", VALUE_BITS);
+  printf("  " QUOTE(BUILD_PROJECT) " --loadlibrary w%d-writeconsole-shellcode.dll\r\n", VALUE_BITS);
 }
 // Output some information about the version and build of this application
 void version(void) {
