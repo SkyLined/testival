@@ -29,9 +29,9 @@ extern LONG WINAPI unhandled_exception_filter(PEXCEPTION_POINTERS exception_poin
 #endif
 
 // Some default settings:
-#define DEFAULT_PROTECT (PAGE_EXECUTE_READWRITE) // By default allocate RWE memory
-#define DEFAULT_ALLOCATION_TYPE (MEM_RESERVE | MEM_COMMIT) // By default reserve and commit memory on allocation.
-#define STDIN_CHUNK_SIZE (0x1000)       // Use a 0x1000 byte buffer to read data from stdin.
+#define DEFAULT_PROTECT (PAGE_EXECUTE_READWRITE)            // By default allocate RWE memory
+#define DEFAULT_ALLOCATION_TYPE (MEM_RESERVE | MEM_COMMIT)  // By default reserve and commit memory on allocation.
+#define STDIN_CHUNK_SIZE (0x1000)                           // Use a 0x1000 byte buffer to read data from stdin.
 
 // get_value_or_offset converts a hexadicimal value in a string to a 32/64-bit integer value. The string can start
 // with '$' to specify that the value is an offset from "memory base address". The converted integer value is stored
@@ -263,7 +263,7 @@ void help(void) {
   printf("and {value} is a %d-bit hexadecimal value or an offset*.\r\n", VALUE_BITS);
   printf("Memory can be set using \"[{address}]={data}\", where {address} is the address\r\n");
   printf("or offset* at which to store the data, and {data} can be on of the following:\r\n");
-  printf("  value:{value} to write a %d-bit hexadecimal number or offset* to the address\r\n", VALUE_BITS);
+  printf("  value:{value} to write a %d-bit hexadecimal number or offset* to the address.\r\n", VALUE_BITS);
   printf("  ascii:{file name} to read the specified file into memory at the given address.\r\n");
   printf("  uncode:{file name} to read the specified file, insert a NULL byte after every\r\n");
   printf("  byte of the file and store the result in memory at the given address.\r\n");
@@ -288,6 +288,8 @@ void help(void) {
   printf("                     default JMP instruction.\r\n");
   printf("General options:\r\n");
   printf("    --verbose        Output verbose information.\r\n");
+  printf("    --delay:time     Wait the given number of milliseconds before executing the\r\n");
+  printf("                     shellcode or loading the library.\r\n");
   printf("    --int3           Trigger a debugger breakpoint before setting EIP/RIP or.\r\n");
   printf("                     loading the module into the process.\r\n");
   printf("    --EH             Use a Structured Exception Handler filter to catch all\r\n");
@@ -303,8 +305,8 @@ void help(void) {
   printf("    --version        Output version and build information.\r\n");
   printf("\r\n");
   printf("Example usage\r\n");
-  printf("  w32-testival.exe eip=$ [$]=ascii:w32-writeconsole-shellcode.bin\r\n");
-  printf("  w32-testival.exe --loadlibrary w32-writeconsole-shellcode.dll\r\n");
+  printf("  w%d-testival.exe eip=$ [$]=ascii:w32-writeconsole-shellcode.bin\r\n", VALUE_BITS);
+  printf("  w%d-testival.exe --loadlibrary w32-writeconsole-shellcode.dll\r\n", VALUE_BITS);
 }
 // Output some information about the version and build of this application
 void version(void) {
@@ -375,8 +377,7 @@ int main(int argc, char** argv) {
   size_t memory_size = 0;
   BOOL memory_base_address_set = FALSE;
   VALUE memory_base_address = 0, memory_address;
-  int allocation_type = DEFAULT_ALLOCATION_TYPE, 
-      protect = DEFAULT_PROTECT;
+  int allocation_type = DEFAULT_ALLOCATION_TYPE, protect = DEFAULT_PROTECT, delay = 0;
   BOOL switch_verbose = 0, switch_int3 = 0, switch_EH = 0, switch_ret = 0, switch_loadlibrary = 0;
   char *module_file_name = NULL;
   HMODULE module = NULL;
@@ -403,6 +404,8 @@ int main(int argc, char** argv) {
       allocation_type = (int) strtol(argv[i] + 11, NULL, 16);
     } else if (strnicmp(argv[i], "--mem:protect=", 14) == 0) {
       protect = (int) strtol(argv[i] + 14, NULL, 16);
+    } else if (strnicmp(argv[i], "--delay=", 8) == 0) {
+      delay = (int) strtol(argv[i] + 8, NULL, 16);
     } else if (stricmp(argv[i], "--verbose") == 0) {
       switch_verbose++;
     } else if (stricmp(argv[i], "--int3") == 0) {
@@ -424,6 +427,7 @@ int main(int argc, char** argv) {
       exit(1);
     } else if (strncmp(argv[i], "--", 2) == 0) {
       printf("Illegal flag \"%s\".\r\n", argv[i]);
+      printf("Try \"w%d-testival.exe --help\"\r\n", VALUE_BITS);
       exit(1);
     } else if (argv[i][0] == '[') {
       VALUE address;
@@ -620,6 +624,7 @@ int main(int argc, char** argv) {
         }
       }
     }
+    Sleep(delay);
     asm_SetRegisters(register_values, switch_int3 > 0, switch_ret > 0, register_setting_sp.is_set, register_setting_ip.is_set);
     if (switch_EH > 1 && RemoveVectoredExceptionHandler(VEH) == 0) {
       perror("Cannot unregister vectored exception handler.\r\n");
@@ -643,6 +648,7 @@ int main(int argc, char** argv) {
         }
       }
     }
+    Sleep(delay);
     if (switch_int3) __debugbreak();
     module = LoadLibrary(module_file_name);
     if (switch_EH > 1 && RemoveVectoredExceptionHandler(VEH) == 0) {
