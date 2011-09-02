@@ -382,6 +382,7 @@ int main(int argc, char** argv) {
   char *module_file_name = NULL;
   HMODULE module = NULL;
   PVOID VEH = NULL;
+  char* error_message;
 
   if (argc == 1 || (argc == 2 && stricmp(argv[1], "--help") == 0)) {
     help();
@@ -672,6 +673,10 @@ int main(int argc, char** argv) {
     module = LoadLibrary(module_file_name);
     if (module == NULL) {
       if (switch_verbose) printf("failed!\r\n");
+      if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+          NULL, GetLastError(), 0, (LPTSTR) &error_message, 0, NULL) == 0) {
+       error_message = NULL;
+      }
     } else {
       if (switch_verbose) printf("ok.\r\n");
     }
@@ -686,6 +691,7 @@ int main(int argc, char** argv) {
     }
     if (module == NULL) {
       fprintf(stderr, "Failed to load module \"%s\".\r\n", module_file_name);
+      if (error_message != NULL) fprintf(stderr, "%s", error_message);
       exit(1);
     }
   }

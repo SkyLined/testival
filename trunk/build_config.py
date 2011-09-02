@@ -1,6 +1,7 @@
 build_config = {
   "version": "1.0",
   "folders": ["writeconsole-shellcodes"],
+  "debug": True,
   "projects": {
     "w32-testival": {
       "architecture": "x86",
