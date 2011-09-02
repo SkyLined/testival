@@ -261,17 +261,16 @@ void help(void) {
   printf("\r\n");
   printf("Registers can be using \"{reg}={value}\", where {reg} is the name of a register\r\n");
   printf("and {value} is a %d-bit hexadecimal value or an offset*.\r\n", VALUE_BITS);
-  printf("Memory can be set using \"[{address}]={data}\", where {address} is the address\r\n");
-  printf("or offset* at which to store the data, and {data} can be on of the following:\r\n");
-  printf("  value:{value} to write a %d-bit hexadecimal number or offset* to the address.\r\n", VALUE_BITS);
-  printf("  ascii:{file name} to read the specified file into memory at the given address.\r\n");
-  printf("  uncode:{file name} to read the specified file, insert a NULL byte after every\r\n");
-  printf("  byte of the file and store the result in memory at the given address.\r\n");
-  printf("  (Use \"con\" as the file name to read data from stdin).\r\n");
-  printf("\r\n");
-  printf("* values and addresses can be entered as a hexadecimal number or as an offset\r\n");
-  printf("from the base address of the allocated memory. To specify an offset use one of\r\n");
-  printf("the following: $, $+{value} or $-{value}.\r\n");
+  printf("Memory can be set using \"[{address}]={value}\", where {address} is the\r\n");
+  printf("address or offset* at which to store the %d-bit hexadecimal number {value}.\r\n", VALUE_BITS);
+  printf("Shellcode can be loaded using \"{type}[{address}]={file name}\", where {type} is\r\n");
+  printf(" either \"a\" for ascii or \"u\" for unicode and {file name} is the file containing\r\n");
+  printf("the shellcode. If you specify \"a\" the file is read into memory \"as is\", but\r\n");
+  printf("if you specify \"u\", the file is read into memory with a NULL byte inserted\r\n");
+  printf("after every byte. You can use \"con\" as a file name to read data from stdin.\r\n");
+  printf("Note*: values and addresses can be entered as a hexadecimal number or using\r\n");
+  printf("$, $+{value} or $-{value} to specify an offset from the base address of the\r\n");
+  printf("allocated memory.\r\n");
   printf("\r\n");
   printf("Options\r\n");
   printf("    --loadlibrary \"module file name\"\r\n");
@@ -305,7 +304,7 @@ void help(void) {
   printf("    --version        Output version and build information.\r\n");
   printf("\r\n");
   printf("Example usage:\r\n");
-  printf("  " QUOTE(BUILD_PROJECT) " eip=$ [$]=ascii:w%d-writeconsole-shellcode.bin\r\n", VALUE_BITS);
+  printf("  " QUOTE(BUILD_PROJECT) " eip=$ a[$]=w%d-writeconsole-shellcode.bin\r\n", VALUE_BITS);
   printf("  " QUOTE(BUILD_PROJECT) " --loadlibrary w%d-writeconsole-shellcode.dll\r\n", VALUE_BITS);
 }
 // Output some information about the version and build of this application
@@ -430,23 +429,24 @@ int main(int argc, char** argv) {
       printf("Illegal flag \"%s\".\r\n", argv[i]);
       printf("Try \"w%d-testival.exe --help\"\r\n", VALUE_BITS);
       exit(1);
-    } else if (argv[i][0] == '[') {
+    } else if (argv[i][0] == '[' || ((argv[i][0] == 'a' || argv[i][0] == 'u') && argv[i][1] == '[')) {
       VALUE address;
-      BOOL address_is_offset;
+      BOOL is_load_file, address_is_offset;
       char *start_of_address, *end_of_address;
       start_of_address = argv[i] + 1;
+      is_load_file = argv[i][0] != '[';
+      if (is_load_file) start_of_address += 1;
       address_is_offset = get_value_or_offset(start_of_address, &end_of_address, &address);
       if (strncmp(end_of_address, "]=", 2) != 0) {
         printf("Illegal data chunk argument \"%s\".\r\n", argv[i]);
         exit(1);
       }
-      if (strnicmp(end_of_address + 2, "value:", 6) == 0) {
-        end_of_address = add_value_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, end_of_address + 8);
-        // Check end_of_address == argv[i] + strlen(argv[i]
-      } else if (strnicmp(end_of_address + 2, "ascii:", 6) == 0) {
-        add_file_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, FALSE, end_of_address + 8);
-      } else if (strnicmp(end_of_address + 2, "unicode:", 8) == 0) {
-        add_file_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, TRUE, end_of_address + 10);
+      if (!is_load_file) {
+        end_of_address = add_value_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, end_of_address + 2);
+      } else if (argv[i][0] == 'a') {
+        add_file_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, FALSE, end_of_address + 2);
+      } else if (argv[i][0] == 'u') {
+        add_file_as_data_chunk(&pfirst_data_chunk, address, address_is_offset, TRUE, end_of_address + 2);
       } else {
         printf("Illegal data chunk argument \"%s\".\r\n", argv[i]);
         exit(1);

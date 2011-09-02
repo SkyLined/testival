@@ -107,25 +107,5 @@ build_config = {
       },
       "test commands": ["test-w64-writeconsole-shellcode.dll.cmd"],
     },
-    # Linux x86
-    "l32-writeconsole-shellcode.bin": {
-      "architecture": "x86",
-      "files": {
-        "l32-writeconsole-shellcode.bin": {
-          "sources": ["l32-writeconsole-shellcode.asm"],
-        }
-      },
-      "test commands": ["test-l32-writeconsole-shellcode.bin.cmd"],
-    },
-    "l32-writeconsole-shellcode-esp.bin": {
-      "architecture": "x86",
-      "files": {
-        "l32-writeconsole-shellcode-esp.bin": {
-          "sources": ["l32-writeconsole-shellcode.asm"],
-          "defines": {"STACK_ALIGN": "TRUE"},
-        }
-      },
-      "test commands": ["test-l32-writeconsole-shellcode-esp.bin.cmd"],
-    }
   }
 }
