@@ -7,7 +7,7 @@ IF "%PROCESSOR_ARCHITECTURE%"=="x86" (
   EXIT /B 0
 )
 
-w64-testival.exe --loadlibrary w64-writeconsole-shellcode.dll | match_output "^Hello, world![\r\n]*$" --verbose >nul
+w64-testival.exe --loadlibrary %CD%\w64-writeconsole-shellcode.dll | CALL match_output.cmd "^Hello, world![\r\n]*$" --verbose >nul
 IF ERRORLEVEL 1 GOTO :FAILED
 
 EXIT /B %ERRORLEVEL%

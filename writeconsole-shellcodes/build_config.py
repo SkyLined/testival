@@ -37,6 +37,18 @@ build_config = {
       },
       "test commands": ["test-w32-writeconsole-shellcode-esp.bin.cmd"],
     },
+    "w32-writeconsole-shellcode-eaf.bin": {                                     # Bypass EAF
+      "architecture": "x86",
+      "dependencies": ["w32-writeconsole-shellcode-hash-list.asm"],
+      "files": {
+        "w32-writeconsole-shellcode-eaf.bin": {
+          "sources":  ["w32-writeconsole-shellcode.asm"],
+          "includes": ["w32-writeconsole-shellcode-hash-list.asm"],
+          "defines":  {"STACK_ALIGN": "TRUE"},
+        }
+      },
+      "test commands": ["test-w32-writeconsole-shellcode-eaf.bin.cmd"],
+    },
     "w32-writeconsole-shellcode.dll": {                                         # DLL that executes the shellcode.
       "architecture": "x86",
       "dependencies": ["w32-writeconsole-shellcode.bin"],
