@@ -17,7 +17,7 @@
 
 
 // Include external assembler code required to set all registers, including ESP/RSP and EIP/RIP:
-extern void asm_SetRegisters(VALUE *pregisters, BOOL do_int3, BOOL do_ret, BOOL set_sp, BOOL set_ip);
+extern "C" void asm_SetRegisters(VALUE *pregisters, BOOL do_int3, BOOL do_ret, BOOL set_sp, BOOL set_ip);
 // Include external exception handling code:
 extern LONG CALLBACK vectored_exception_handler(PEXCEPTION_POINTERS exception_pointers);
 extern LONG WINAPI unhandled_exception_filter(PEXCEPTION_POINTERS exception_pointers);
@@ -92,7 +92,7 @@ char* add_value_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addr
   VALUE *pvalue;
   char *end_of_value;
   // Allocate one block of memory to hold the data chunk and the value:
-  char *pchunk_and_data = malloc(sizeof(struct data_chunk) + sizeof(VALUE));
+  char *pchunk_and_data = (char*)malloc(sizeof(struct data_chunk) + sizeof(VALUE));
   if (pchunk_and_data == 0) {
     fprintf(stderr, "Memory cannot be allocated for data chunk.\r\n");
     exit(1);
@@ -146,14 +146,14 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
       // Is this the first time we're reading data?
       if (bytes_read == 0) {
         // Yes: allocate one block of memory to hold the data chunk and the buffer:
-        pchunk_and_data = malloc(sizeof(struct data_chunk) + data_size);
+        pchunk_and_data = (char*)malloc(sizeof(struct data_chunk) + data_size);
         if (pchunk_and_data == 0) {
           fprintf(stderr, "Memory cannot be allocated for stdin data chunk.\r\n");
           exit(1);
         }
       } else {
         // No: reallocate one larger block of memory to hold the data chunk and the buffer:
-        pchunk_and_data = realloc(pchunk_and_data, data_size);
+        pchunk_and_data = (char*)realloc(pchunk_and_data, data_size);
         if (pchunk_and_data == 0) {
           fprintf(stderr, "Additional memory cannot be allocated for stdin data chunk.\r\n");
           exit(1);
@@ -193,7 +193,7 @@ void add_file_as_data_chunk(struct data_chunk **ppfirst_data_chunk, VALUE addres
     // that conversion to unicode doubles the size of the data:
     data_size = file_size;
     if (unicode) data_size *= 2;
-    pchunk_and_data = malloc(sizeof(struct data_chunk) + data_size);
+    pchunk_and_data = (char*)malloc(sizeof(struct data_chunk) + data_size);
     if (pchunk_and_data == 0) {
       fprintf(stderr, "Memory cannot be allocate for file data chunk.\r\n");
       exit(1);
